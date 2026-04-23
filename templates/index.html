@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競輪データ自動収集アプリ</title>
+    <style>
+        body {
+            font-family: "Hiragino Sans", "Meiryo", sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        /* 👇 新しく追加した競輪場ボタンのデザイン 👇 */
+        .track-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .track-btn {
+            background-color: #0b1d52; /* 企画書に合わせたディープブルー */
+            color: white;
+            border: 2px solid #0b1d52;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .track-btn:hover {
+            background-color: white;
+            color: #0b1d52;
+            transform: translateY(-2px); /* ホバー時に少し浮き上がる */
+        }
+        
+        .races-container {
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 30px;
+            padding: 0;
+        }
+        
+        .race-block {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-top: 5px solid #ff4b4b;
+            width: 100%; 
+            max-width: 650px; 
+            box-sizing: border-box;
+        }
+        
+        .race-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .racer-row {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .racer-row:last-child {
+            border-bottom: none;
+        }
+        
+        .racer-basic {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .car-number {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            margin-right: 15px;
+            box-sizing: border-box;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .color-1 { background-color: #ffffff; color: #333; border: 1px solid #333; }
+        .color-2 { background-color: #333333; color: #ffffff; }
+        .color-3 { background-color: #e60012; color: #ffffff; }
+        .color-4 { background-color: #0054a6; color: #ffffff; }
+        .color-5 { background-color: #fff100; color: #333333; }
+        .color-6 { background-color: #009944; color: #ffffff; }
+        .color-7 { background-color: #f39800; color: #ffffff; }
+        .color-8 { background-color: #e5007f; color: #ffffff; }
+        .color-9 { background-color: #601986; color: #ffffff; }
+        .color-- { background-color: #cccccc; color: #ffffff; } 
+
+        .racer-info-header {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap; 
+            gap: 12px;
+            flex-grow: 1;
+        }
+        
+        .player-name {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .player-class {
+            font-size: 13px;
+            font-weight: bold;
+            color: #d81b60; 
+            border: 1px solid #d81b60;
+            background-color: #fff0f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .update-date {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .sheet-data-box {
+            margin-top: 10px;
+            background: #fcfcfc;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #f39c12; 
+            border-radius: 6px;
+            padding: 12px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 6px 15px;
+            margin-bottom: 10px;
+        }
+        
+        .stat { display: flex; justify-content: space-between; font-size: 13px; }
+        .label { color: #555; font-weight: bold; }
+        .stars { color: #f39c12; letter-spacing: 2px; }
+        
+        .feature-text {
+            font-size: 13px;
+            color: #333;
+            border-top: 1px dashed #ccc;
+            padding-top: 8px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .youtube-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; 
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .youtube-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%; border: none;
+        }
+
+        .no-data-box {
+            margin-top: 10px;
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .main-error-box {
+            background-color: #fdf2f2;
+            border: 1px solid #d9534f;
+            color: #d9534f;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin: 0 auto;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.0); }
+        }
+
+        .loading-text { 
+            text-align: center; 
+            font-size: 16px; 
+            font-weight: bold;
+            color: #007bff; 
+            margin-top: 15px; 
+            letter-spacing: 2px;
+            animation: loadingPulse 1.5s infinite ease-in-out;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🚴 競輪データ 自動収集アプリ</h1>
+    </div>
+
+    <div class="search-box">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #555;">本日の開催場</h3>
+        <form method="POST" onsubmit="document.getElementById('loading').style.display='block';">
+            <div class="track-buttons">
+                {% if todays_tracks %}
+                    {% for track in todays_tracks %}
+                        <button type="submit" name="track_name" value="{{ track }}" class="track-btn">{{ track }}</button>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #666; font-size: 14px;">開催場データを取得中、または本日のレースはありません。</p>
+                {% endif %}
+            </div>
+            
+            <div id="loading" class="loading-text">
+                NowLoading・・・
+            </div>
+        </form>
+    </div>
+
+    {% if results %}
+        <h2 style="text-align: center; margin-bottom: 30px;">{{ track_name }}競輪場の出走データ</h2>
+        <div class="races-container">
+            {% for race in results %}
+                <div class="race-block">
+                    <div class="race-title">{{ race['race_title'] }}</div>
+                    
+                    <div class="racers-list">
+                        {% for racer in race['racers'] %}
+                            <div class="racer-row">
+                                <div class="racer-basic">
+                                    <div class="car-number color-{{ racer['車番'] }}">{{ racer['車番'] }}</div>
+                                    
+                                    <div class="racer-info-header">
+                                        <div class="player-name">{{ racer['選手名'] }}</div>
+                                        
+                                        {% if racer['sheet_info'] %}
+                                            {% if racer['sheet_info']['階級'] %}
+                                                <div class="player-class">{{ racer['sheet_info']['階級'] }}</div>
+                                            {% endif %}
+                                            {% if racer['sheet_info']['更新日'] %}
+                                                <div class="update-date">更新日時 {{ racer['sheet_info']['更新日'] }}</div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if racer['sheet_info'] %}
+                                    <div class="sheet-data-box">
+                                        <div class="stats-grid">
+                                            <div class="stat"><span class="label">総合力</span><span class="stars">{{ racer['sheet_info']['総合力'] }}</span></div>
+                                            <div class="stat"><span class="label">スタミナ</span><span class="stars">{{ racer['sheet_info']['スタミナ'] }}</span></div>
+                                            <div class="stat"><span class="label">機動力</span><span class="stars">{{ racer['sheet_info']['機動力'] }}</span></div>
+                                            <div class="stat"><span class="label">自在性</span><span class="stars">{{ racer['sheet_info']['自在性'] }}</span></div>
+                                            <div class="stat"><span class="label">フィジカル</span><span class="stars">{{ racer['sheet_info']['フィジカル'] }}</span></div>
+                                            <div class="stat"><span class="label">切り替え</span><span class="stars">{{ racer['sheet_info']['切り替え'] }}</span></div>
+                                        </div>
+                                        <div class="feature-text">
+                                            <strong style="color:#007bff;">特徴：</strong>{{ racer['sheet_info']['特徴'] }}
+                                        </div>
+                                        
+                                        {% if racer['sheet_info']['embed_url'] %}
+                                            <div class="youtube-container">
+                                                <iframe src="{{ racer['sheet_info']['embed_url'] }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="no-data-box">
+                                        取得できませんでした
+                                    </div>
+                                {% endif %}
+                                
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif results == [] or results is none %}
+        {% if track_name %}
+        <div class="main-error-box">
+            <p>指定された競輪場の出走データが見つかりませんでした。</p>
+        </div>
+        {% endif %}
+    {% endif %}
+
+</body>
+</html>
