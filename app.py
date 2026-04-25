@@ -4,18 +4,19 @@ import urllib.request
 import csv
 import io
 import re
-import threading # 🌟 奥義の鍵：マルチスレッド（並行処理）をインポート
+import threading
+from datetime import datetime, time as dt_time # 🌟 日付と時刻の判定用
 
 app = Flask(__name__)
 
-# 🌟 ここにご自身のスプレッドシートのCSV URLを貼り付けてください
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRR5wiFHX2u1-44p1Hc4a7_BV3TeDMWxCzyKi6Zy3E_IQVqrhnTGYzsNQ7gQJ9d0Uy091bvEj2T83oA/pub?output=csv"
+# 🌟 ご自身のスプレッドシートのCSV URL
+CSV_URL = "ここにコピーしたURLを貼り付けてください"
 
+# 🌟 状態管理用の変数
 TODAYS_TRACKS = []
-# 🌟 奥義2：全競輪場のデータを保存しておく「キャッシュ（記憶領域）」
 RACE_CACHE = {} 
-# 🌟 奥義2：裏側でデータ取得中かどうかを判定するフラグ
 IS_FETCHING = False 
+LAST_UPDATE_DATE = None # 🌟 最後に更新した日付を記録
 
 def get_youtube_embed_url(youtube_url):
     if not youtube_url:
@@ -45,23 +46,22 @@ def get_sheet_data(url):
     return sheet_dict
 
 def background_fetch_all():
-    """🌟 サーバーの裏側でコッソリ全データを集めておく関数 🌟"""
-    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING
+    """裏側でデータを一括取得する"""
+    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING, LAST_UPDATE_DATE
     if IS_FETCHING:
         return
     IS_FETCHING = True
     
     try:
-        print("[裏方作業] 本日の開催場と全レースデータの先回り取得を開始します...")
+        print(f"[裏方作業] {datetime.now()} データ更新を開始します...")
         tracks = scrape_todays_tracks()
         TODAYS_TRACKS = tracks
         
         sheet_data = get_sheet_data(CSV_URL)
+        new_cache = {} # 一時的に保存
         
         for track in tracks:
-            print(f"[裏方作業] {track} のデータを事前取得中...")
             scraped_data = scrape_racelist_smart_wait(track)
-            
             if scraped_data:
                 for race in scraped_data:
                     for racer in race['racers']:
@@ -72,11 +72,11 @@ def background_fetch_all():
                             racer['sheet_info']['embed_url'] = get_youtube_embed_url(yt_url)
                         else:
                             racer['sheet_info'] = None
-                
-                # 🌟 取得したデータを記憶領域（メモリ）に保存！
-                RACE_CACHE[track] = scraped_data
+                new_cache[track] = scraped_data
         
-        print("[裏方作業] ✨ すべてのデータの事前準備が完了しました！")
+        RACE_CACHE = new_cache
+        LAST_UPDATE_DATE = datetime.now().date() # 更新完了した日付を記録
+        print(f"[裏方作業] ✨ {LAST_UPDATE_DATE} のデータ準備がすべて完了しました！")
     except Exception as e:
         print(f"[裏方作業エラー]: {e}")
     finally:
@@ -84,10 +84,25 @@ def background_fetch_all():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING
+    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING, LAST_UPDATE_DATE
 
-    # 誰もアクセスしていない最初の状態なら、裏方さんに作業を指示する
-    if not TODAYS_TRACKS and not IS_FETCHING:
+    now = datetime.now()
+    today = now.date()
+    update_time = dt_time(8, 0) # 🌟 更新基準時刻：午前8時
+
+    # 🌟 自動更新判定ロジック 🌟
+    # 1. まだ一度も取得していない
+    # 2. 日付が変わっている 且つ 今が8時を過ぎている
+    should_update = False
+    if LAST_UPDATE_DATE is None:
+        should_update = True
+    elif today > LAST_UPDATE_DATE and now.time() >= update_time:
+        should_update = True
+
+    if should_update and not IS_FETCHING:
+        print("🌟 午前8時を過ぎたため、最新データへの更新を開始します")
+        # キャッシュをクリアして裏方スレッドを起動
+        TODAYS_TRACKS = []
         thread = threading.Thread(target=background_fetch_all)
         thread.start()
 
@@ -96,30 +111,22 @@ def index():
 
     if request.method == "POST":
         track_name = request.form.get("track_name")
-        
-        if track_name:
-            # 🌟 奥義2発動：記憶領域（キャッシュ）にデータがあれば、1秒以下で返す！
-            if track_name in RACE_CACHE:
-                print(f"✨ {track_name}のデータをキャッシュから一瞬で返します！")
-                results = RACE_CACHE[track_name]
-            else:
-                # 万が一まだ裏方さんが取得していなかった場合は、その場で取りに行く
-                print(f"⚠️ {track_name}はまだ準備中だったため、今から取得します...")
-                scraped_data = scrape_racelist_smart_wait(track_name)
-                sheet_data = get_sheet_data(CSV_URL)
-                
-                if scraped_data:
-                    for race in scraped_data:
-                        for racer in race['racers']:
-                            racer_name = racer['選手名']
-                            if racer_name in sheet_data:
-                                racer['sheet_info'] = sheet_data[racer_name]
-                                yt_url = racer['sheet_info'].get('YouTubeリンク', '')
-                                racer['sheet_info']['embed_url'] = get_youtube_embed_url(yt_url)
-                            else:
-                                racer['sheet_info'] = None
-                    RACE_CACHE[track_name] = scraped_data # ついでに記憶しておく
-                    results = scraped_data
+        if track_name and track_name in RACE_CACHE:
+            results = RACE_CACHE[track_name]
+        elif track_name:
+            # キャッシュにない場合のみ直接取得（保険用）
+            scraped_data = scrape_racelist_smart_wait(track_name)
+            sheet_data = get_sheet_data(CSV_URL)
+            if scraped_data:
+                for race in scraped_data:
+                    for racer in race['racers']:
+                        racer_name = racer['選手名']
+                        if racer_name in sheet_data:
+                            racer['sheet_info'] = sheet_data[racer_name]
+                            racer['sheet_info']['embed_url'] = get_youtube_embed_url(racer['sheet_info'].get('YouTubeリンク', ''))
+                        else:
+                            racer['sheet_info'] = None
+                results = scraped_data
 
     return render_template("index.html", results=results, track_name=track_name, todays_tracks=TODAYS_TRACKS)
 
