@@ -25,7 +25,6 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        /* 👇 新しく追加した競輪場ボタンのデザイン 👇 */
         .track-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -35,7 +34,7 @@
         }
         
         .track-btn {
-            background-color: #0b1d52; /* 企画書に合わせたディープブルー */
+            background-color: #0b1d52;
             color: white;
             border: 2px solid #0b1d52;
             padding: 12px 24px;
@@ -50,7 +49,7 @@
         .track-btn:hover {
             background-color: white;
             color: #0b1d52;
-            transform: translateY(-2px); /* ホバー時に少し浮き上がる */
+            transform: translateY(-2px);
         }
         
         .races-container {
@@ -162,23 +161,71 @@
             border-radius: 6px;
             padding: 12px;
         }
+
+        .stat-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f4f4f4; 
+            border: 2px solid #bbb; 
+            border-radius: 6px;
+            padding: 12px 15px; 
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-main .label {
+            font-size: 18px; 
+            color: #444; 
+            font-weight: bold;
+        }
+        
+        .stat-main .star-count {
+            font-size: 26px; 
+            margin-left: 8px;
+        }
+        
+        .stat-main .stars {
+            font-size: 22px; 
+            letter-spacing: 3px;
+        }
         
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr); 
-            gap: 6px 15px;
-            margin-bottom: 10px;
+            gap: 15px; 
+            margin-bottom: 15px;
         }
         
-        .stat { display: flex; justify-content: space-between; font-size: 13px; }
+        .stat { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            gap: 5px; 
+            font-size: 13px; 
+        }
+        
         .label { color: #555; font-weight: bold; }
-        .stars { color: #f39c12; letter-spacing: 2px; }
+        
+        .stat .star-count {
+            font-size: 16px;
+            margin-left: 5px;
+        }
+        
+        .stars { letter-spacing: 2px; }
+
+        .rank-0 { color: #cccccc !important; }
+        .rank-1, .rank-2 { color: #3498db !important; } 
+        .rank-3, .rank-4 { color: #f39c12 !important; } 
+        .rank-5 { color: #27ae60 !important; } 
+        .rank-6 { color: #8e44ad !important; } 
+        .rank-7, .rank-8, .rank-9 { color: #e74c3c !important; } 
         
         .feature-text {
             font-size: 13px;
             color: #333;
             border-top: 1px dashed #ccc;
-            padding-top: 8px;
+            padding-top: 10px;
             margin-bottom: 10px;
             line-height: 1.5;
         }
@@ -206,19 +253,6 @@
             text-align: center;
             color: #999;
             font-size: 13px;
-        }
-
-        .main-error-box {
-            background-color: #fdf2f2;
-            border: 1px solid #d9534f;
-            color: #d9534f;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            margin: 0 auto;
-            max-width: 600px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
         @keyframes loadingPulse {
@@ -253,7 +287,7 @@
                         <button type="submit" name="track_name" value="{{ track }}" class="track-btn">{{ track }}</button>
                     {% endfor %}
                 {% else %}
-                    <p style="color: #666; font-size: 14px;">開催場データを取得中、または本日のレースはありません。</p>
+                    <p style="color: #666; font-size: 14px;">開催場データを取得中...</p>
                 {% endif %}
             </div>
             
@@ -292,14 +326,45 @@
                                 
                                 {% if racer['sheet_info'] %}
                                     <div class="sheet-data-box">
-                                        <div class="stats-grid">
-                                            <div class="stat"><span class="label">総合力</span><span class="stars">{{ racer['sheet_info']['総合力'] }}</span></div>
-                                            <div class="stat"><span class="label">スタミナ</span><span class="stars">{{ racer['sheet_info']['スタミナ'] }}</span></div>
-                                            <div class="stat"><span class="label">機動力</span><span class="stars">{{ racer['sheet_info']['機動力'] }}</span></div>
-                                            <div class="stat"><span class="label">積極性</span><span class="stars">{{ racer['sheet_info']['積極性'] }}</span></div>
-                                            <div class="stat"><span class="label">自在性</span><span class="stars">{{ racer['sheet_info']['自在性'] }}</span></div>
-                                            <div class="stat"><span class="label">フィジカル</span><span class="stars">{{ racer['sheet_info']['フィジカル'] }}</span></div>
+                                        
+                                        <div class="stat-main">
+                                            {% set total_c = (racer['sheet_info']['総合力']|string).count('★') %}
+                                            <span class="label">総合力 <span class="star-count rank-{{ total_c }}">{{ total_c }}</span></span>
+                                            <span class="stars rank-{{ total_c }}">{{ racer['sheet_info']['総合力'] }}</span>
                                         </div>
+                                        
+                                        <div class="stats-grid">
+                                            {% set sta_c = (racer['sheet_info']['スタミナ']|string).count('★') %}
+                                            <div class="stat">
+                                                <span class="label">スタミナ <span class="star-count rank-{{ sta_c }}">{{ sta_c }}</span></span>
+                                                <span class="stars rank-{{ sta_c }}">{{ racer['sheet_info']['スタミナ'] }}</span>
+                                            </div>
+                                            
+                                            {% set mob_c = (racer['sheet_info']['機動力']|string).count('★') %}
+                                            <div class="stat">
+                                                <span class="label">機動力 <span class="star-count rank-{{ mob_c }}">{{ mob_c }}</span></span>
+                                                <span class="stars rank-{{ mob_c }}">{{ racer['sheet_info']['機動力'] }}</span>
+                                            </div>
+                                            
+                                            {% set agg_c = (racer['sheet_info']['積極性']|string).count('★') %}
+                                            <div class="stat">
+                                                <span class="label">積極性 <span class="star-count rank-{{ agg_c }}">{{ agg_c }}</span></span>
+                                                <span class="stars rank-{{ agg_c }}">{{ racer['sheet_info']['積極性'] }}</span>
+                                            </div>
+                                            
+                                            {% set flex_c = (racer['sheet_info']['自在性']|string).count('★') %}
+                                            <div class="stat">
+                                                <span class="label">自在性 <span class="star-count rank-{{ flex_c }}">{{ flex_c }}</span></span>
+                                                <span class="stars rank-{{ flex_c }}">{{ racer['sheet_info']['自在性'] }}</span>
+                                            </div>
+                                            
+                                            {% set phy_c = (racer['sheet_info']['フィジカル']|string).count('★') %}
+                                            <div class="stat">
+                                                <span class="label">フィジカル <span class="star-count rank-{{ phy_c }}">{{ phy_c }}</span></span>
+                                                <span class="stars rank-{{ phy_c }}">{{ racer['sheet_info']['フィジカル'] }}</span>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="feature-text">
                                             <strong style="color:#007bff;">特徴：</strong>{{ racer['sheet_info']['特徴'] }}
                                         </div>
@@ -322,12 +387,6 @@
                 </div>
             {% endfor %}
         </div>
-    {% elif results == [] or results is none %}
-        {% if track_name %}
-        <div class="main-error-box">
-            <p>指定された競輪場の出走データが見つかりませんでした。</p>
-        </div>
-        {% endif %}
     {% endif %}
 
 </body>
