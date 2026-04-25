@@ -1,18 +1,21 @@
 from flask import Flask, render_template, request
-# 先ほど作った「scrape_todays_tracks」を新しくインポートします
 from scrape_test import scrape_racelist_smart_wait, scrape_todays_tracks
 import urllib.request
 import csv
 import io
 import re
+import threading # 🌟 奥義の鍵：マルチスレッド（並行処理）をインポート
 
 app = Flask(__name__)
 
-# 🌟 ここにコピーしたCSVのURLを貼り付けてください 🌟
+# 🌟 ここにご自身のスプレッドシートのCSV URLを貼り付けてください
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRR5wiFHX2u1-44p1Hc4a7_BV3TeDMWxCzyKi6Zy3E_IQVqrhnTGYzsNQ7gQJ9d0Uy091bvEj2T83oA/pub?output=csv"
 
-# 🌟 本日の開催場を一時保存するリスト（毎回ブラウザを開くと遅いため） 🌟
 TODAYS_TRACKS = []
+# 🌟 奥義2：全競輪場のデータを保存しておく「キャッシュ（記憶領域）」
+RACE_CACHE = {} 
+# 🌟 奥義2：裏側でデータ取得中かどうかを判定するフラグ
+IS_FETCHING = False 
 
 def get_youtube_embed_url(youtube_url):
     if not youtube_url:
@@ -41,23 +44,23 @@ def get_sheet_data(url):
         print(f"シート読み込みエラー: {e}")
     return sheet_dict
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    global TODAYS_TRACKS # 記憶しておいたリストを使う宣言
-    results = None
-    track_name = None
-
-    # アプリを起動して最初にアクセスした時だけ、今日の開催場を取得する
-    if not TODAYS_TRACKS:
-        TODAYS_TRACKS = scrape_todays_tracks()
-
-    if request.method == "POST":
-        # クリックされたボタンの value（競輪場名）を受け取る
-        track_name = request.form.get("track_name")
+def background_fetch_all():
+    """🌟 サーバーの裏側でコッソリ全データを集めておく関数 🌟"""
+    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING
+    if IS_FETCHING:
+        return
+    IS_FETCHING = True
+    
+    try:
+        print("[裏方作業] 本日の開催場と全レースデータの先回り取得を開始します...")
+        tracks = scrape_todays_tracks()
+        TODAYS_TRACKS = tracks
         
-        if track_name:
-            scraped_data = scrape_racelist_smart_wait(track_name)
-            sheet_data = get_sheet_data(CSV_URL)
+        sheet_data = get_sheet_data(CSV_URL)
+        
+        for track in tracks:
+            print(f"[裏方作業] {track} のデータを事前取得中...")
+            scraped_data = scrape_racelist_smart_wait(track)
             
             if scraped_data:
                 for race in scraped_data:
@@ -69,9 +72,55 @@ def index():
                             racer['sheet_info']['embed_url'] = get_youtube_embed_url(yt_url)
                         else:
                             racer['sheet_info'] = None
-                results = scraped_data
+                
+                # 🌟 取得したデータを記憶領域（メモリ）に保存！
+                RACE_CACHE[track] = scraped_data
+        
+        print("[裏方作業] ✨ すべてのデータの事前準備が完了しました！")
+    except Exception as e:
+        print(f"[裏方作業エラー]: {e}")
+    finally:
+        IS_FETCHING = False
 
-    # TODAYS_TRACKS も画面側に渡してボタンを生成させる
+@app.route("/", methods=["GET", "POST"])
+def index():
+    global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING
+
+    # 誰もアクセスしていない最初の状態なら、裏方さんに作業を指示する
+    if not TODAYS_TRACKS and not IS_FETCHING:
+        thread = threading.Thread(target=background_fetch_all)
+        thread.start()
+
+    results = None
+    track_name = None
+
+    if request.method == "POST":
+        track_name = request.form.get("track_name")
+        
+        if track_name:
+            # 🌟 奥義2発動：記憶領域（キャッシュ）にデータがあれば、1秒以下で返す！
+            if track_name in RACE_CACHE:
+                print(f"✨ {track_name}のデータをキャッシュから一瞬で返します！")
+                results = RACE_CACHE[track_name]
+            else:
+                # 万が一まだ裏方さんが取得していなかった場合は、その場で取りに行く
+                print(f"⚠️ {track_name}はまだ準備中だったため、今から取得します...")
+                scraped_data = scrape_racelist_smart_wait(track_name)
+                sheet_data = get_sheet_data(CSV_URL)
+                
+                if scraped_data:
+                    for race in scraped_data:
+                        for racer in race['racers']:
+                            racer_name = racer['選手名']
+                            if racer_name in sheet_data:
+                                racer['sheet_info'] = sheet_data[racer_name]
+                                yt_url = racer['sheet_info'].get('YouTubeリンク', '')
+                                racer['sheet_info']['embed_url'] = get_youtube_embed_url(yt_url)
+                            else:
+                                racer['sheet_info'] = None
+                    RACE_CACHE[track_name] = scraped_data # ついでに記憶しておく
+                    results = scraped_data
+
     return render_template("index.html", results=results, track_name=track_name, todays_tracks=TODAYS_TRACKS)
 
 if __name__ == "__main__":
