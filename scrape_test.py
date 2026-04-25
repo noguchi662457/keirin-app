@@ -7,20 +7,35 @@ from bs4 import BeautifulSoup
 import time
 import re
 
-def scrape_todays_tracks():
-    print("本日の開催場リストを取得しています（裏側で実行中）...")
+def get_fast_options():
+    """🌟 高速化のための共通設定関数 🌟"""
     options = Options()
+    
+    # 1. ページ内の画像が読み込まれるのを待たずに即次へ進む設定
+    options.page_load_strategy = 'eager' 
+    
     options.add_argument('--headless=new')
     options.add_argument('--window-size=1920,1080')
-    
-    # 🌟 追加：クラウドのLinuxサーバーでChromeを動かすための必須設定 🌟
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    
     options.add_argument('--disable-blink-features=AutomationControlled')
+    
+    # 2. 画像、CSS、フォントを一切ダウンロードしない設定（通信量とメモリを大幅カット）
+    prefs = {
+        "profile.managed_default_content_settings.images": 2,
+        "profile.managed_default_content_settings.stylesheets": 2,
+        "profile.managed_default_content_settings.fonts": 2
+    }
+    options.add_experimental_option("prefs", prefs)
+    
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
     
+    return options
+
+def scrape_todays_tracks():
+    print("本日の開催場リストを取得しています（超高速モード）...")
+    options = get_fast_options()
     driver = webdriver.Chrome(options=options)
     driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
         'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
@@ -28,7 +43,7 @@ def scrape_todays_tracks():
     
     try:
         driver.get("https://keirin.jp/")
-        time.sleep(3) 
+        time.sleep(2) # 待機時間を3秒から2秒に短縮
         
         tracks = []
         html_text = driver.page_source
@@ -51,19 +66,8 @@ def scrape_todays_tracks():
         driver.quit()
 
 def scrape_racelist_smart_wait(track_name):
-    print(f"「{track_name}」のデータ取得を開始します（裏側で実行中）...")
-    options = Options()
-    options.add_argument('--headless=new') 
-    options.add_argument('--window-size=1920,1080')
-    
-    # 🌟 追加：クラウドのLinuxサーバーでChromeを動かすための必須設定 🌟
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    
-    options.add_argument('--disable-blink-features=AutomationControlled')
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    
+    print(f"「{track_name}」のデータ取得を開始します（超高速モード）...")
+    options = get_fast_options()
     driver = webdriver.Chrome(options=options)
     driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
         'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
@@ -71,7 +75,7 @@ def scrape_racelist_smart_wait(track_name):
     
     try:
         driver.get("https://keirin.jp/")
-        time.sleep(3)
+        time.sleep(2) # 待機時間を3秒から2秒に短縮
         
         xpath = f"//tr[.//div[contains(@class, 'kaisaichi') and contains(text(), '{track_name}')]]//button[contains(@class, 'slist')]"
         buttons = driver.find_elements(By.XPATH, xpath)
@@ -80,7 +84,7 @@ def scrape_racelist_smart_wait(track_name):
         for btn in buttons:
             try:
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-                time.sleep(1)
+                time.sleep(0.5) # クリックの待機時間を1秒から0.5秒に短縮
                 driver.execute_script("arguments[0].click();", btn)
                 clicked = True
                 break
@@ -91,7 +95,8 @@ def scrape_racelist_smart_wait(track_name):
             return None
 
         try:
-            WebDriverWait(driver, 15).until(
+            # ページ表示の最大待機時間を15秒から10秒に短縮
+            WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "sllink_name"))
             )
         except Exception:
