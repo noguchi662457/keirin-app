@@ -5,18 +5,21 @@ import csv
 import io
 import re
 import threading
-from datetime import datetime, time as dt_time # 🌟 日付と時刻の判定用
+from datetime import datetime, time as dt_time, timezone, timedelta # 🌟 timezone と timedelta を追加
+
+# 🌟 サーバーに「日本時間（JST）」を教える設定
+JST = timezone(timedelta(hours=+9), 'JST')
 
 app = Flask(__name__)
 
 # 🌟 ご自身のスプレッドシートのCSV URL
 CSV_URL = "ここにコピーしたURLを貼り付けてください"
 
-# 🌟 状態管理用の変数
+# 状態管理用の変数
 TODAYS_TRACKS = []
 RACE_CACHE = {} 
 IS_FETCHING = False 
-LAST_UPDATE_DATE = None # 🌟 最後に更新した日付を記録
+LAST_UPDATE_DATE = None 
 
 def get_youtube_embed_url(youtube_url):
     if not youtube_url:
@@ -53,12 +56,13 @@ def background_fetch_all():
     IS_FETCHING = True
     
     try:
-        print(f"[裏方作業] {datetime.now()} データ更新を開始します...")
+        # 🌟 日本時間でログを出力
+        print(f"[裏方作業] {datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')} 日本時間でデータ更新を開始します...")
         tracks = scrape_todays_tracks()
         TODAYS_TRACKS = tracks
         
         sheet_data = get_sheet_data(CSV_URL)
-        new_cache = {} # 一時的に保存
+        new_cache = {} 
         
         for track in tracks:
             scraped_data = scrape_racelist_smart_wait(track)
@@ -75,7 +79,7 @@ def background_fetch_all():
                 new_cache[track] = scraped_data
         
         RACE_CACHE = new_cache
-        LAST_UPDATE_DATE = datetime.now().date() # 更新完了した日付を記録
+        LAST_UPDATE_DATE = datetime.now(JST).date() # 🌟 日本時間の日付を記録
         print(f"[裏方作業] ✨ {LAST_UPDATE_DATE} のデータ準備がすべて完了しました！")
     except Exception as e:
         print(f"[裏方作業エラー]: {e}")
@@ -86,13 +90,12 @@ def background_fetch_all():
 def index():
     global TODAYS_TRACKS, RACE_CACHE, IS_FETCHING, LAST_UPDATE_DATE
 
-    now = datetime.now()
+    # 🌟 現在時刻を「日本時間」で取得するように変更
+    now = datetime.now(JST)
     today = now.date()
-    update_time = dt_time(8, 0) # 🌟 更新基準時刻：午前8時
+    update_time = dt_time(8, 0) 
 
-    # 🌟 自動更新判定ロジック 🌟
-    # 1. まだ一度も取得していない
-    # 2. 日付が変わっている 且つ 今が8時を過ぎている
+    # 自動更新判定ロジック
     should_update = False
     if LAST_UPDATE_DATE is None:
         should_update = True
@@ -100,8 +103,7 @@ def index():
         should_update = True
 
     if should_update and not IS_FETCHING:
-        print("🌟 午前8時を過ぎたため、最新データへの更新を開始します")
-        # キャッシュをクリアして裏方スレッドを起動
+        print("🌟 午前8時(日本時間)を過ぎたため、最新データへの更新を開始します")
         TODAYS_TRACKS = []
         thread = threading.Thread(target=background_fetch_all)
         thread.start()
@@ -114,7 +116,6 @@ def index():
         if track_name and track_name in RACE_CACHE:
             results = RACE_CACHE[track_name]
         elif track_name:
-            # キャッシュにない場合のみ直接取得（保険用）
             scraped_data = scrape_racelist_smart_wait(track_name)
             sheet_data = get_sheet_data(CSV_URL)
             if scraped_data:
