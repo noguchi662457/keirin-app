@@ -51,6 +51,14 @@
             color: #0b1d52;
             transform: translateY(-2px);
         }
+
+        .track-btn.active {
+            background-color: #f8f9fa; 
+            color: #0b1d52; 
+            border: 2px solid #0b1d52;
+            box-shadow: none;
+            transform: translateY(2px); 
+        }
         
         .races-container {
             display: flex; 
@@ -230,6 +238,38 @@
             line-height: 1.5;
         }
 
+        /* 🌟 ちぎった / ちぎられた 専用のデザイン 🌟 */
+        .drop-history {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .drop-item {
+            font-size: 13px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            line-height: 1.4;
+        }
+        
+        .dropped-others {
+            background-color: #fff4f4; /* 薄い赤系 */
+            border-left: 4px solid #e74c3c;
+            color: #333;
+        }
+        
+        .got-dropped {
+            background-color: #f0f7ff; /* 薄い青系 */
+            border-left: 4px solid #3498db;
+            color: #333;
+        }
+        
+        .drop-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
         .youtube-container {
             position: relative;
             width: 100%;
@@ -275,7 +315,7 @@
 <body>
 
     <div class="header">
-        <h1>🚴 競輪EX</h1>
+        <h1>🚴 競輪データ 自動収集アプリ</h1>
     </div>
 
     <div class="search-box">
@@ -284,7 +324,7 @@
             <div class="track-buttons">
                 {% if todays_tracks %}
                     {% for track in todays_tracks %}
-                        <button type="submit" name="track_name" value="{{ track }}" class="track-btn">{{ track }}</button>
+                        <button type="submit" name="track_name" value="{{ track }}" class="track-btn {% if track == track_name %}active{% endif %}">{{ track }}</button>
                     {% endfor %}
                 {% else %}
                     <p style="color: #666; font-size: 14px;">開催場データを取得中...</p>
@@ -368,6 +408,22 @@
                                         <div class="feature-text">
                                             <strong style="color:#007bff;">特徴：</strong>{{ racer['sheet_info']['特徴'] }}
                                         </div>
+
+                                        {% if racer['sheet_info'].get('ちぎった選手') or racer['sheet_info'].get('ちぎられた選手') %}
+                                            <div class="drop-history">
+                                                {% if racer['sheet_info'].get('ちぎった選手') %}
+                                                    <div class="drop-item dropped-others">
+                                                        <span class="drop-label">🔥 ちぎった:</span> {{ racer['sheet_info']['ちぎった選手'] }}
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                {% if racer['sheet_info'].get('ちぎられた選手') %}
+                                                    <div class="drop-item got-dropped">
+                                                        <span class="drop-label">💦 ちぎられた:</span> {{ racer['sheet_info']['ちぎられた選手'] }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
                                         
                                         {% if racer['sheet_info']['embed_url'] %}
                                             <div class="youtube-container">
