@@ -13,7 +13,7 @@ JST = timezone(timedelta(hours=+9), 'JST')
 app = Flask(__name__)
 
 # 🌟 ご自身のスプレッドシートのCSV URL
-CSV_URL = "ここにコピーしたURLを貼り付けてください"
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRR5wiFHX2u1-44p1Hc4a7_BV3TeDMWxCzyKi6Zy3E_IQVqrhnTGYzsNQ7gQJ9d0Uy091bvEj2T83oA/pub?output=csv"
 
 # 状態管理用の変数
 TODAYS_TRACKS = []
