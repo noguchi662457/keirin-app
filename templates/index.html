@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>競輪EX</title>
+    <title>競輪データ自動収集アプリ</title>
     <style>
         body {
             font-family: "Hiragino Sans", "Meiryo", sans-serif;
@@ -198,10 +198,11 @@
             letter-spacing: 3px;
         }
         
+        /* 🌟 ここが変更ポイント！「2」から「3」列に変更 🌟 */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 15px; 
+            grid-template-columns: repeat(3, 1fr); /* 3列表示に設定 */
+            gap: 10px; /* 3列で狭くなるため、隙間を15pxから10pxに調整 */
             margin-bottom: 15px;
         }
         
@@ -209,18 +210,18 @@
             display: flex; 
             flex-direction: column; 
             align-items: flex-start; 
-            gap: 5px; 
-            font-size: 13px; 
+            gap: 3px; /* 少し詰めました */
+            font-size: 12px; /* スマホでもはみ出さないように少し縮小 */
         }
         
         .label { color: #555; font-weight: bold; }
         
         .stat .star-count {
-            font-size: 16px;
+            font-size: 14px; /* スマホ用に微調整 */
             margin-left: 5px;
         }
         
-        .stars { letter-spacing: 2px; }
+        .stars { letter-spacing: 1px; } /* 星と星の間隔を微調整 */
 
         .rank-0 { color: #cccccc !important; }
         .rank-1, .rank-2 { color: #3498db !important; } 
@@ -238,7 +239,6 @@
             line-height: 1.5;
         }
 
-        /* 🌟 ちぎった / ちぎられた 専用のデザイン 🌟 */
         .drop-history {
             display: flex;
             flex-direction: column;
@@ -254,13 +254,13 @@
         }
         
         .dropped-others {
-            background-color: #fff4f4; /* 薄い赤系 */
+            background-color: #fff4f4; 
             border-left: 4px solid #e74c3c;
             color: #333;
         }
         
         .got-dropped {
-            background-color: #f0f7ff; /* 薄い青系 */
+            background-color: #f0f7ff; 
             border-left: 4px solid #3498db;
             color: #333;
         }
