@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>競輪探偵ポアロの手帳</title>
+    <title>競輪データ自動収集アプリ</title>
     <style>
         body {
             font-family: "Hiragino Sans", "Meiryo", sans-serif;
@@ -155,10 +155,40 @@
             border-radius: 4px;
         }
 
-        .update-date {
-            font-size: 12px;
-            color: #666;
+        /* 🌟 追加：名前の横に配置する「総合力」のコンパクトデザイン 🌟 */
+        .total-power-inline {
+            display: flex;
+            align-items: center;
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 3px 8px;
+            margin-left: auto; /* 右側に寄せるための魔法 */
+        }
+        
+        .total-power-inline .label {
+            font-size: 11px;
+            color: #555;
             font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .total-power-inline .star-count {
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .total-power-inline .stars {
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .update-date {
+            font-size: 11px;
+            color: #888;
+            width: 100%; /* 次の行に落とすための設定 */
+            margin-top: 2px;
         }
 
         .sheet-data-box {
@@ -170,58 +200,29 @@
             padding: 12px;
         }
 
-        .stat-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f4f4f4; 
-            border: 2px solid #bbb; 
-            border-radius: 6px;
-            padding: 12px 15px; 
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-main .label {
-            font-size: 18px; 
-            color: #444; 
-            font-weight: bold;
-        }
-        
-        .stat-main .star-count {
-            font-size: 26px; 
-            margin-left: 8px;
-        }
-        
-        .stat-main .stars {
-            font-size: 22px; 
-            letter-spacing: 3px;
-        }
-        
-        /* 🌟 ここが変更ポイント！「2」から「3」列に変更 🌟 */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3列表示に設定 */
-            gap: 10px; /* 3列で狭くなるため、隙間を15pxから10pxに調整 */
-            margin-bottom: 15px;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin-bottom: 12px; /* 少し余白を減らしました */
         }
         
         .stat { 
             display: flex; 
             flex-direction: column; 
             align-items: flex-start; 
-            gap: 3px; /* 少し詰めました */
-            font-size: 12px; /* スマホでもはみ出さないように少し縮小 */
+            gap: 3px; 
+            font-size: 12px; 
         }
         
         .label { color: #555; font-weight: bold; }
         
         .stat .star-count {
-            font-size: 14px; /* スマホ用に微調整 */
+            font-size: 14px; 
             margin-left: 5px;
         }
         
-        .stars { letter-spacing: 1px; } /* 星と星の間隔を微調整 */
+        .stars { letter-spacing: 1px; } 
 
         .rank-0 { color: #cccccc !important; }
         .rank-1, .rank-2 { color: #3498db !important; } 
@@ -315,7 +316,7 @@
 <body>
 
     <div class="header">
-        <h1>🚴競輪探偵ポアロの手帳</h1>
+        <h1>🚴 競輪データ 自動収集アプリ</h1>
     </div>
 
     <div class="search-box">
@@ -357,6 +358,15 @@
                                             {% if racer['sheet_info']['階級'] %}
                                                 <div class="player-class">{{ racer['sheet_info']['階級'] }}</div>
                                             {% endif %}
+                                            
+                                            <!-- 🌟 ここに総合力を移動しました 🌟 -->
+                                            {% set total_c = (racer['sheet_info']['総合力']|string).count('★') %}
+                                            <div class="total-power-inline">
+                                                <span class="label">総合力</span>
+                                                <span class="star-count rank-{{ total_c }}">{{ total_c }}</span>
+                                                <span class="stars rank-{{ total_c }}">{{ racer['sheet_info']['総合力'] }}</span>
+                                            </div>
+
                                             {% if racer['sheet_info']['更新日'] %}
                                                 <div class="update-date">更新日時 {{ racer['sheet_info']['更新日'] }}</div>
                                             {% endif %}
@@ -367,11 +377,7 @@
                                 {% if racer['sheet_info'] %}
                                     <div class="sheet-data-box">
                                         
-                                        <div class="stat-main">
-                                            {% set total_c = (racer['sheet_info']['総合力']|string).count('★') %}
-                                            <span class="label">総合力 <span class="star-count rank-{{ total_c }}">{{ total_c }}</span></span>
-                                            <span class="stars rank-{{ total_c }}">{{ racer['sheet_info']['総合力'] }}</span>
-                                        </div>
+                                        <!-- 🌟 元々ここにあった stat-main (でかい総合力枠) を削除しました 🌟 -->
                                         
                                         <div class="stats-grid">
                                             {% set sta_c = (racer['sheet_info']['スタミナ']|string).count('★') %}
