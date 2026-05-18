@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>競輪探偵ポアロの手帳</title>
+    <title>競輪データ自動収集アプリ</title>
     <style>
         body {
             font-family: "Hiragino Sans", "Meiryo", sans-serif;
             background-color: #f4f7f6;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 15px; /* スマホ向けに少し余白を減らす */
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .search-box {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -29,18 +29,18 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         
         .track-btn {
             background-color: #0b1d52;
             color: white;
             border: 2px solid #0b1d52;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -64,7 +64,7 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            gap: 30px;
+            gap: 20px;
             padding: 0;
         }
         
@@ -72,7 +72,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
+            padding: 15px;
             border-top: 5px solid #ff4b4b;
             width: 100%; 
             max-width: 650px; 
@@ -80,11 +80,11 @@
         }
         
         .race-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #333;
             border-bottom: 2px solid #eee;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
             margin-bottom: 15px;
         }
         
@@ -100,12 +100,15 @@
             border-bottom: none;
         }
         
+        /* 🌟 車番と情報エリア全体の並びを最適化 */
         .racer-basic {
             display: flex;
-            align-items: center;
+            align-items: center; /* 横方向中央揃え */
             width: 100%;
+            margin-bottom: 5px; /* 下部余白 */
         }
         
+        /* 車番 */
         .car-number {
             display: inline-flex;
             justify-content: center;
@@ -116,7 +119,7 @@
             height: 36px;
             border-radius: 4px;
             margin-right: 15px;
-            box-sizing: border-box;
+            flex-shrink: 0; /*潰れないようにする*/
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         
@@ -131,18 +134,40 @@
         .color-9 { background-color: #601986; color: #ffffff; }
         .color-- { background-color: #cccccc; color: #ffffff; } 
 
+        /* 🌟 情報エリア全体（名前、調子、階級、総合力、更新日）の並び 🌟 */
+        /* 狭い画面では自動的に総合力が次の行へ落ちるようにする(Flexbox wrap) */
         .racer-info-header {
             display: flex;
+            flex-wrap: wrap; /* 折り返しを許可 */
+            justify-content: space-between; /* 広い画面では両端に配置 */
             align-items: center;
-            flex-wrap: wrap; 
+            flex-grow: 1;
+            gap: 10px; /* 要素間の隙間 */
+            width: calc(100% - 51px); /* 車番の幅(36+15)を引く */
+        }
+        
+        /* 🌟 左側グループ（名前、調子、階級、更新日） 🌟 */
+        .racer-info-left {
+            display: flex;
+            flex-wrap: wrap; /* 更新日を次の行へ落とすため */
+            align-items: center;
             gap: 12px;
             flex-grow: 1;
         }
         
         .player-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            text-align: left;
+            white-space: nowrap; 
+        }
+
+        /* 🌟 要望：調子アイコン（画像）のデザイン（初期状態は非表示） 🌟 */
+        .condition-icon {
+            width: 24px;  /* アイコンの幅 */
+            height: 24px; /* アイコンの高さ */
+            object-fit: contain; /* 画像が潰れないようにする */
+            border-radius: 4px;
+            display: none; /* 下のJSで変換成功したら表示する */
         }
 
         .player-class {
@@ -155,7 +180,17 @@
             border-radius: 4px;
         }
 
-        /* 🌟 追加：名前の横に配置する「総合力」のコンパクトデザイン 🌟 */
+        /* 更新日 */
+        .update-date {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+            width: 100%; /* 強制的に次の行へ落とす */
+            margin-top: 2px;
+        }
+
+        /* 🌟 要望：名前の横に配置するコンパクトな「総合力」表示 🌟 */
+        /* 狭い画面では独立した灰色の枠（stat-main）を消し、ここに収める */
         .total-power-inline {
             display: flex;
             align-items: center;
@@ -163,7 +198,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 3px 8px;
-            margin-left: auto; /* 右側に寄せるための魔法 */
+            white-space: nowrap;
         }
         
         .total-power-inline .label {
@@ -184,45 +219,38 @@
             letter-spacing: 1px;
         }
 
-        .update-date {
-            font-size: 11px;
-            color: #888;
-            width: 100%; /* 次の行に落とすための設定 */
-            margin-top: 2px;
-        }
-
         .sheet-data-box {
             margin-top: 10px;
             background: #fcfcfc;
             border: 1px solid #e0e0e0;
             border-left: 4px solid #f39c12; 
             border-radius: 6px;
-            padding: 12px;
+            padding: 10px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr); 
-            gap: 10px; 
-            margin-bottom: 12px; /* 少し余白を減らしました */
+            gap: 8px; 
+            margin-bottom: 12px; 
         }
         
         .stat { 
             display: flex; 
             flex-direction: column; 
             align-items: flex-start; 
-            gap: 3px; 
-            font-size: 12px; 
+            gap: 2px; 
+            font-size: 11px; /* スマホで3列収まるように微調整 */
         }
         
         .label { color: #555; font-weight: bold; }
         
         .stat .star-count {
-            font-size: 14px; 
-            margin-left: 5px;
+            font-size: 13px; 
+            margin-left: 2px;
         }
         
-        .stars { letter-spacing: 1px; } 
+        .stars { letter-spacing: 0px; } 
 
         .rank-0 { color: #cccccc !important; }
         .rank-1, .rank-2 { color: #3498db !important; } 
@@ -232,44 +260,31 @@
         .rank-7, .rank-8, .rank-9 { color: #e74c3c !important; } 
         
         .feature-text {
-            font-size: 13px;
+            font-size: 12px;
             color: #333;
             border-top: 1px dashed #ccc;
-            padding-top: 10px;
+            padding-top: 8px;
             margin-bottom: 10px;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         .drop-history {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .drop-item {
-            font-size: 13px;
-            padding: 8px 10px;
+            font-size: 12px;
+            padding: 6px 8px;
             border-radius: 6px;
             line-height: 1.4;
         }
         
-        .dropped-others {
-            background-color: #fff4f4; 
-            border-left: 4px solid #e74c3c;
-            color: #333;
-        }
-        
-        .got-dropped {
-            background-color: #f0f7ff; 
-            border-left: 4px solid #3498db;
-            color: #333;
-        }
-        
-        .drop-label {
-            font-weight: bold;
-            margin-right: 5px;
-        }
+        .dropped-others { background-color: #fff4f4; border-left: 4px solid #e74c3c; color: #333; }
+        .got-dropped { background-color: #f0f7ff; border-left: 4px solid #3498db; color: #333; }
+        .drop-label { font-weight: bold; margin-right: 5px; }
 
         .youtube-container {
             position: relative;
@@ -279,11 +294,7 @@
             overflow: hidden;
             background: #000;
         }
-        
-        .youtube-container iframe {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%; border: none;
-        }
+        .youtube-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
         .no-data-box {
             margin-top: 10px;
@@ -293,34 +304,20 @@
             padding: 10px;
             text-align: center;
             color: #999;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        @keyframes loadingPulse {
-            0%, 100% { opacity: 0.3; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1.0); }
-        }
-
-        .loading-text { 
-            text-align: center; 
-            font-size: 16px; 
-            font-weight: bold;
-            color: #007bff; 
-            margin-top: 15px; 
-            letter-spacing: 2px;
-            animation: loadingPulse 1.5s infinite ease-in-out;
-            display: none;
-        }
+        .loading-text { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🚴競輪探偵ポアロの手帳</h1>
+        <h1>🚴 競輪データ 自動収集アプリ</h1>
     </div>
 
     <div class="search-box">
-        <h3 style="margin-top: 0; margin-bottom: 20px; color: #555;">本日の開催場</h3>
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: #555;">本日の開催場</h3>
         <form method="POST" onsubmit="document.getElementById('loading').style.display='block';">
             <div class="track-buttons">
                 {% if todays_tracks %}
@@ -331,15 +328,12 @@
                     <p style="color: #666; font-size: 14px;">開催場データを取得中...</p>
                 {% endif %}
             </div>
-            
-            <div id="loading" class="loading-text">
-                NowLoading・・・
-            </div>
+            <div id="loading" class="loading-text" style="text-align:center; color:#007bff; font-weight:bold; margin-top:10px;">NowLoading・・・</div>
         </form>
     </div>
 
     {% if results %}
-        <h2 style="text-align: center; margin-bottom: 30px;">{{ track_name }}競輪場の出走データ</h2>
+        <h2 style="text-align: center; margin-bottom: 20px;">{{ track_name }}競輪場の出走データ</h2>
         <div class="races-container">
             {% for race in results %}
                 <div class="race-block">
@@ -352,95 +346,69 @@
                                     <div class="car-number color-{{ racer['車番'] }}">{{ racer['車番'] }}</div>
                                     
                                     <div class="racer-info-header">
-                                        <div class="player-name">{{ racer['選手名'] }}</div>
-                                        
-                                        {% if racer['sheet_info'] %}
-                                            {% if racer['sheet_info']['階級'] %}
-                                                <div class="player-class">{{ racer['sheet_info']['階級'] }}</div>
-                                            {% endif %}
+                                        <div class="racer-info-left">
+                                            <div class="player-name">{{ racer['選手名'] }}</div>
                                             
-                                            <!-- 🌟 ここに総合力を移動しました 🌟 -->
+                                            {% if racer['sheet_info'] %}
+                                                {% if racer['sheet_info'].get('調子') %}
+                                                    <img data-src="{{ racer['sheet_info']['調子'] }}" class="condition-icon auto-drive-img" alt="調子">
+                                                {% endif %}
+                                                
+                                                {% if racer['sheet_info']['階級'] %}
+                                                    <div class="player-class">{{ racer['sheet_info']['階級'] }}</div>
+                                                {% endif %}
+                                                
+                                                {% if racer['sheet_info']['更新日'] %}
+                                                    <div class="update-date">更新日時 {{ racer['sheet_info']['更新日'] }}</div>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+
+                                        {% if racer['sheet_info'] %}
                                             {% set total_c = (racer['sheet_info']['総合力']|string).count('★') %}
                                             <div class="total-power-inline">
                                                 <span class="label">総合力</span>
                                                 <span class="star-count rank-{{ total_c }}">{{ total_c }}</span>
                                                 <span class="stars rank-{{ total_c }}">{{ racer['sheet_info']['総合力'] }}</span>
                                             </div>
-
-                                            {% if racer['sheet_info']['更新日'] %}
-                                                <div class="update-date">更新日時 {{ racer['sheet_info']['更新日'] }}</div>
-                                            {% endif %}
                                         {% endif %}
                                     </div>
                                 </div>
                                 
                                 {% if racer['sheet_info'] %}
                                     <div class="sheet-data-box">
-                                        
-                                        <!-- 🌟 元々ここにあった stat-main (でかい総合力枠) を削除しました 🌟 -->
-                                        
                                         <div class="stats-grid">
                                             {% set sta_c = (racer['sheet_info']['スタミナ']|string).count('★') %}
-                                            <div class="stat">
-                                                <span class="label">スタミナ <span class="star-count rank-{{ sta_c }}">{{ sta_c }}</span></span>
-                                                <span class="stars rank-{{ sta_c }}">{{ racer['sheet_info']['スタミナ'] }}</span>
-                                            </div>
+                                            <div class="stat"><span class="label">スタミナ <span class="star-count rank-{{ sta_c }}">{{ sta_c }}</span></span><span class="stars rank-{{ sta_c }}">{{ racer['sheet_info']['スタミナ'] }}</span></div>
                                             
                                             {% set mob_c = (racer['sheet_info']['機動力']|string).count('★') %}
-                                            <div class="stat">
-                                                <span class="label">機動力 <span class="star-count rank-{{ mob_c }}">{{ mob_c }}</span></span>
-                                                <span class="stars rank-{{ mob_c }}">{{ racer['sheet_info']['機動力'] }}</span>
-                                            </div>
+                                            <div class="stat"><span class="label">機動力 <span class="star-count rank-{{ mob_c }}">{{ mob_c }}</span></span><span class="stars rank-{{ mob_c }}">{{ racer['sheet_info']['機動力'] }}</span></div>
                                             
                                             {% set agg_c = (racer['sheet_info']['積極性']|string).count('★') %}
-                                            <div class="stat">
-                                                <span class="label">積極性 <span class="star-count rank-{{ agg_c }}">{{ agg_c }}</span></span>
-                                                <span class="stars rank-{{ agg_c }}">{{ racer['sheet_info']['積極性'] }}</span>
-                                            </div>
+                                            <div class="stat"><span class="label">積極性 <span class="star-count rank-{{ agg_c }}">{{ agg_c }}</span></span><span class="stars rank-{{ agg_c }}">{{ racer['sheet_info']['積極性'] }}</span></div>
                                             
                                             {% set flex_c = (racer['sheet_info']['自在性']|string).count('★') %}
-                                            <div class="stat">
-                                                <span class="label">自在性 <span class="star-count rank-{{ flex_c }}">{{ flex_c }}</span></span>
-                                                <span class="stars rank-{{ flex_c }}">{{ racer['sheet_info']['自在性'] }}</span>
-                                            </div>
+                                            <div class="stat"><span class="label">自在性 <span class="star-count rank-{{ flex_c }}">{{ flex_c }}</span></span><span class="stars rank-{{ flex_c }}">{{ racer['sheet_info']['自在性'] }}</span></div>
                                             
                                             {% set phy_c = (racer['sheet_info']['フィジカル']|string).count('★') %}
-                                            <div class="stat">
-                                                <span class="label">フィジカル <span class="star-count rank-{{ phy_c }}">{{ phy_c }}</span></span>
-                                                <span class="stars rank-{{ phy_c }}">{{ racer['sheet_info']['フィジカル'] }}</span>
-                                            </div>
+                                            <div class="stat"><span class="label">フィジカル <span class="star-count rank-{{ phy_c }}">{{ phy_c }}</span></span><span class="stars rank-{{ phy_c }}">{{ racer['sheet_info']['フィジカル'] }}</span></div>
                                         </div>
                                         
-                                        <div class="feature-text">
-                                            <strong style="color:#007bff;">特徴：</strong>{{ racer['sheet_info']['特徴'] }}
-                                        </div>
+                                        <div class="feature-text"><strong style="color:#007bff;">特徴：</strong>{{ racer['sheet_info']['特徴'] }}</div>
 
                                         {% if racer['sheet_info'].get('ちぎった選手') or racer['sheet_info'].get('ちぎられた選手') %}
                                             <div class="drop-history">
-                                                {% if racer['sheet_info'].get('ちぎった選手') %}
-                                                    <div class="drop-item dropped-others">
-                                                        <span class="drop-label">🔥 ちぎった:</span> {{ racer['sheet_info']['ちぎった選手'] }}
-                                                    </div>
-                                                {% endif %}
-                                                
-                                                {% if racer['sheet_info'].get('ちぎられた選手') %}
-                                                    <div class="drop-item got-dropped">
-                                                        <span class="drop-label">💦 ちぎられた:</span> {{ racer['sheet_info']['ちぎられた選手'] }}
-                                                    </div>
-                                                {% endif %}
+                                                {% if racer['sheet_info'].get('ちぎった選手') %}<div class="drop-item dropped-others"><span class="drop-label">🔥 ちぎった:</span> {{ racer['sheet_info']['ちぎった選手'] }}</div>{% endif %}
+                                                {% if racer['sheet_info'].get('ちぎられた選手') %}<div class="drop-item got-dropped"><span class="drop-label">💦 ちぎられた:</span> {{ racer['sheet_info']['ちぎられた選手'] }}</div>{% endif %}
                                             </div>
                                         {% endif %}
                                         
                                         {% if racer['sheet_info']['embed_url'] %}
-                                            <div class="youtube-container">
-                                                <iframe src="{{ racer['sheet_info']['embed_url'] }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                            </div>
+                                            <div class="youtube-container"><iframe src="{{ racer['sheet_info']['embed_url'] }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
                                         {% endif %}
                                     </div>
                                 {% else %}
-                                    <div class="no-data-box">
-                                        取得できませんでした
-                                    </div>
+                                    <div class="no-data-box">取得できませんでした</div>
                                 {% endif %}
                                 
                             </div>
@@ -451,5 +419,30 @@
         </div>
     {% endif %}
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const icons = document.querySelectorAll('.auto-drive-img');
+            icons.forEach(icon => {
+                let rawUrl = icon.getAttribute('data-src');
+                if (!rawUrl) return;
+
+                // セル内に「調子 」などの余分な文字が入っていたら自動で取り除く
+                let url = rawUrl.replace('調子', '').trim();
+
+                if (url.includes('drive.google.com/file/d/')) {
+                    // GoogleドライブのURLを、画像直リンクに変換する
+                    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        icon.src = 'https://drive.google.com/uc?export=view&id=' + match[1];
+                        icon.style.display = 'inline-block';
+                    }
+                } else if (url.startsWith('http')) {
+                    // ドライブ以外の普通の画像URLの場合
+                    icon.src = url;
+                    icon.style.display = 'inline-block';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
